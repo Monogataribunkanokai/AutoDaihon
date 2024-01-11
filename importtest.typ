@@ -4,9 +4,11 @@
   //main.children.at(0).fields()
   for s in main.children{
     if s.has("text"){
-    for t in (s.text.split("[\p{Zs}]")) {
-      t
-    }
+      stack(dir: ttb,spacing: 1em,
+      ..for t in (s.text.split("[\p{Zs}]")) {
+        
+    },
+      )
     }
   }
 }
