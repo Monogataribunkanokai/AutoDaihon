@@ -2,32 +2,33 @@
   let rotateChar =  "[ー\u{FF5E}\u{301C}\p{Open_Punctuation}\p{Close_Punctuation}a-zA-Z0-9]"
   //set align(right)
   let b
-//  main.children.at(2).fields()
+//  main.children.at(0).func()
 
 //文章全体を分割して積み上げ
 stack(
   dir:rtl,
   spacing: 1em,
-  ..for s in main.children{
+  ..if(main.has("children")){
+    //b="children判定突破"
+  for s in main.children{
     //bodyに本文が含まれている構文の場合
-    if s.has("body"){
-      if s.at("body").has("children"){
-        for t in s.at("body").children{
-          if t.has("text"){
-            stack(dir:rtl,1em,
-              ..for u in t.at("text"){
-                u
-              },
+    if s.func()==text{
+      b="テキスト判定突破 \n"
+          b=s
+            stack(dir:ttb,0.3em,
+              ..for t in s.at("text"){
+                  rotate(90deg,t)
+                },
               )
-          }
         }
-      }
-    }
     else {
-      b=main.all()
       }
   }
+  }
+  else{
+    b="childrenなし"
+    }
   ,)
   b
 }
-*aa* *aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa*
+aaaaa bbbbb ccccc
