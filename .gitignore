@@ -1,2 +1,3 @@
 exampleHTML/*.html
 typst/
+.venv/
