@@ -12,6 +12,7 @@ class GetHTML():
         self.__url=url
         self.__soup=self.__get_HTML_soup()
         self.__site_data=self.__get_HTML_data()
+        self.__generated_HTML:str=''
     def __get_HTML_data(self)->requests.models.Response:
         """Get HTML data from URL
         Returns:
@@ -22,7 +23,8 @@ class GetHTML():
         return site_data
     def __get_HTML_soup(self):
         site_data=self.__get_HTML_data()
-        soup=BeautifulSoup(site_data.text,'html.parser')
+        soup=BeautifulSoup(site_data.text,'html.parser',from_encoding="Shift_JIS")
+        #print(soup)
         return soup
 
     def download_HTML_row_file(self,save_path:str='',file_name:str|bool=False):
@@ -57,14 +59,19 @@ class GetHTML():
         return self.__soup.find('head')
     def get_meta_body(self):
         return self.__soup.find('div',class_='metadata')
-    def generate_ruby_HTML(self):
+    def generate_ruby_HTML(self,line_number:int=45):
         main_text=self.get_main_text()
         #本文のルビを削除
         main_text=re.sub(r'<ruby><rb>(.+?)<\/rb><rp>（<\/rp><rt>.*?<\/rt><rp>）</rp><\/ruby>','\\1',str(main_text))
         main_text=re.sub(r'<div class="main_text">','',str(main_text))
         main_text=main_text.replace('\n','')
         main_text=main_text.replace('<br/>','\n')
-        main=main_text.split()
+        main:list[str]=[]
+        for u in main_text.split():
+            if len(u)>line_number:
+                main.append(u[:line_number]+'\n'+u[line_number:])
+            else:
+                main.append(u)
         #main=re.split(r'<br/>',main_text)
         add_ruby=AddRuby()
         result:str=''
@@ -73,12 +80,9 @@ class GetHTML():
         main_text=result.rstrip('</div><br/>\n')
         main_text=Template('<div class="main_text"><br />$contents</div></body>').substitute(contents=main_text)
         main_text=str(self.get_head())+'<body>'+str(self.get_meta_body())+main_text
+        self.__generated_HTML=main_text
         return main_text
     def save_ruby_html(self):
-        main_text=self.generate_ruby_HTML()
-        with open (str(g.get_title())+'ルビ付き'+'.html','w') as f:
+        main_text=self.__generated_HTML
+        with open (str(self.get_title())+'ルビ付き'+'.html','w') as f:
             f.write(main_text)
-
-url:str='https://www.aozora.gr.jp/cards/000081/files/473_42318.html'
-g=GetHTML(url=url)
-g.save_ruby_html()
