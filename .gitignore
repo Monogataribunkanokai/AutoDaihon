@@ -1,3 +1,4 @@
 exampleHTML/*.html
 typst/
 .venv/
+**/__pycache__/**

@@ -26,6 +26,12 @@ class GetHTML():
         return soup
 
     def download_HTML_row_file(self,save_path:str='',file_name:str|bool=False):
+        """URLからHTMLをダウンロードする
+
+        Args:
+            save_path (str, optional): ダウンロードしたファイルを保存するディレクトリパス. Defaults to ''.
+            file_name (変更するファイル名 | bool, optional): ファイル名を変更するかどうか. Defaults to False.
+        """
         if type(file_name)==bool and file_name==False:
             save_path=os.path.join(save_path,str(self.get_title())+'.html')
         else:
@@ -34,6 +40,11 @@ class GetHTML():
             file.write(self.__site_data.text)
 
     def get_title(self):
+        """文庫タイトルを取得する
+
+        Returns:
+            _type_: タイトル
+        """
         titel_text=self.__soup.find('meta',attrs= {'name':'DC.Title'}).get('content')
         return titel_text
     def get_creator(self):
@@ -48,6 +59,7 @@ class GetHTML():
         return self.__soup.find('div',class_='metadata')
     def generate_ruby_HTML(self):
         main_text=self.get_main_text()
+        #本文のルビを削除
         main_text=re.sub(r'<ruby><rb>(.+?)<\/rb><rp>（<\/rp><rt>.*?<\/rt><rp>）</rp><\/ruby>','\\1',str(main_text))
         main_text=re.sub(r'<div class="main_text">','',str(main_text))
         main_text=main_text.replace('\n','')
