@@ -2,3 +2,4 @@ exampleHTML/*.html
 typst/
 .venv/
 **/__pycache__/**
+tempCodeRunnerFile.py
