@@ -1,8 +1,9 @@
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 import os
 import re
 from string import Template
+from AddRuby import AddRuby
 
 
 class GetHTML:
@@ -21,58 +22,75 @@ class GetHTML:
         site_data.encoding = site_data.apparent_encoding
         return site_data
 
-    def __get_HTML_soup(self):
+    def __get_HTML_soup(self) -> BeautifulSoup:
         site_data = self.__get_HTML_data()
-        soup = BeautifulSoup(
-            site_data.text,
-            "html.parser",
-            from_encoding="Shift_JIS"
-            )
+        soup = BeautifulSoup(site_data.text, "html.parser", from_encoding="Shift_JIS")
         # print(soup)
         return soup
 
     def download_HTML_row_file(
         self, save_path: str = "", file_name: str | bool = False
-    ):
+    ) -> str:
         """URLからHTMLをダウンロードする
 
         Args:
             save_path (str, optional): ダウンロードしたファイルを保存するディレクトリパス. Defaults to ''.
             file_name (変更するファイル名 | bool, optional): ファイル名を変更するかどうか. Defaults to False.
+        Returns:
+            str : 保存したファイルパス
         """
-        if type(file_name) == bool and file_name == False:
-            save_path = os.path.join(save_path, str(self.get_title()) + ".html")
-        else:
-            save_path = os.path.join(save_path, str(file_name))
+        if isinstance(file_name, bool):
+            if not file_name:
+                save_path = os.path.join(save_path, str(self.__get_title()) + ".html")
+            else:
+                save_path = os.path.join(save_path, str(file_name))
         with open(save_path, mode="w") as file:
             file.write(self.__site_data.text)
+        return save_path
 
-    def get_title(self):
+    def __get_title(self) -> str | None:
         """文庫タイトルを取得する
         Returns:
-            _type_: タイトル
+            str: タイトル
         """
-        titel_text = self.__soup.find("meta", attrs={"name": "DC.Title"}).get("content")
+        titel_text: str | None = None
+        blocks = self.__soup.find("meta", attrs={"name": "DC.Title"})
+        if isinstance(blocks, Tag):
+            content = blocks.get("content")
+            if isinstance(content, str):
+                titel_text = content
+            elif isinstance(content, list):
+                titel_text = content[0]
         return titel_text
 
-    def get_creator(self):
-        titel_text = self.__soup.find("meta", attrs={"name": "DC.Creator"}).get(
-            "content"
-        )
-        return titel_text
+    def __get_creator(self) -> str | None:
+        """作者を取得する
 
-    def get_main_text(self):
+        Returns:
+            str : 作者
+        """
+        creator_text: str | None = None
+        blocks = self.__soup.find("meta", attrs={"name": "DC.Creator"})
+        if isinstance(blocks, Tag):
+            content = blocks.get("content")
+            if isinstance(content, str):
+                creator_text = content
+            elif isinstance(content, list):
+                creator_text = content[0]
+        return creator_text
+
+    def __get_main_text(self):
         main_text = self.__soup.find("div", class_="main_text")
         return main_text
 
-    def get_head(self):
+    def __get_head(self):
         return self.__soup.find("head")
 
-    def get_meta_body(self):
+    def __get_meta_body(self):
         return self.__soup.find("div", class_="metadata")
 
     def generate_ruby_HTML(self, line_number: int = 45):
-        main_text = self.get_main_text()
+        main_text = self.__get_main_text()
         # 本文のルビを削除
         main_text = re.sub(
             r"<ruby><rb>(.+?)<\/rb><rp>（<\/rp><rt>.*?<\/rt><rp>）</rp><\/ruby>",
@@ -92,18 +110,18 @@ class GetHTML:
         add_ruby = AddRuby()
         result: str = ""
         for t in main:
-            result += add_ruby.add_rubi(t) + "<br/>\n"
+            result += add_ruby.add_HTML_ruby(t) + "<br/>\n"
         main_text = result.rstrip("</div><br/>\n")
         main_text = Template(
             '<div class="main_text"><br />$contents</div></body>'
         ).substitute(contents=main_text)
         main_text = (
-            str(self.get_head()) + "<body>" + str(self.get_meta_body()) + main_text
+            str(self.__get_head()) + "<body>" + str(self.__get_meta_body()) + main_text
         )
         self.__generated_HTML = main_text
         return main_text
 
     def save_ruby_html(self):
         main_text = self.__generated_HTML
-        with open(str(self.get_title()) + "ルビ付き" + ".html", "w") as f:
+        with open(str(self.__get_title()) + "ルビ付き" + ".html", "w") as f:
             f.write(main_text)
